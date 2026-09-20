@@ -21,7 +21,7 @@ export const DATA = {
 
   // Untuk foto: taruh file di folder public/foto lalu isi, misalnya foto: '/foto/ketua.jpg'
   ketua: {
-    nama: 'Nama Ketua OSIS',
+    nama: '-----__------',
     jabatan: 'Ketua OSIS',
     foto: null,
     ringkas:
@@ -35,7 +35,7 @@ export const DATA = {
   },
 
   pembina: {
-    nama: 'Nama Pembina OSIS',
+    nama: 'Moch. Fajrin',
     jabatan: 'Pembina OSIS',
     foto: null,
     ringkas:
@@ -65,62 +65,20 @@ export const DATA = {
     {
       id: 'mpls', judul: 'Masa Pengenalan Lingkungan Sekolah (MPLS)', kat: 'Kepemimpinan',
       mulai: '2026-07-13T07:00:00+07:00', sampai: '2026-07-15', tempat: 'Lapangan dan aula sekolah',
-      ekskul: ['pramuka', 'pmr', 'paskibra'],
+      ekskul: ['o', 'pmr', 'paskibra'],
       desk: 'Mengenalkan siswa baru pada lingkungan sekolah, tata tertib, organisasi, dan ekstrakurikuler. OSIS memandu kegiatan bersama para pembina ekskul.',
     },
     {
       id: 'hutri', judul: 'Upacara dan Lomba HUT RI ke-81', kat: 'Peringatan',
-      mulai: '2026-08-17T07:00:00+07:00', tempat: 'Lapangan upacara',
-      ekskul: ['paskibra', 'pramuka', 'olahraga'],
+      mulai: '2026-08-19T07:00:00+07:00', tempat: 'Lapangan upacara',
+      ekskul: ['olahraga'],
       desk: 'Upacara bendera diikuti seluruh warga sekolah, dilanjutkan lomba tradisional antarkelas.',
     },
     {
-      id: 'ldk', judul: 'Latihan Dasar Kepemimpinan (LDK)', kat: 'Kepemimpinan',
-      mulai: '2026-09-26T07:30:00+07:00', sampai: '2026-09-27', tempat: 'Sekolah dan area perkemahan',
-      ekskul: ['pramuka', 'pmr'],
-      desk: 'Pelatihan kepemimpinan, kerja tim, dan manajemen kegiatan bagi pengurus OSIS dan perwakilan kelas.',
-    },
-    {
-      id: 'baksos', judul: 'Bakti Sosial dan Donor Darah', kat: 'Sosial',
-      mulai: '2026-10-10T08:00:00+07:00', tempat: 'Aula sekolah',
-      ekskul: ['pmr', 'rohis'],
-      desk: 'Penggalangan bantuan dan donor darah untuk masyarakat sekitar, dikoordinasi bersama PMR.',
-    },
-    {
-      id: 'santri', judul: 'Peringatan Hari Santri', kat: 'Peringatan',
-      mulai: '2026-10-22T07:30:00+07:00', tempat: 'Halaman sekolah',
-      ekskul: ['rohis', 'seni'],
-      desk: 'Apel dan pentas religi yang disiapkan bersama Rohis dan ekstrakurikuler seni.',
-    },
-    {
-      id: 'sumpah', judul: 'Peringatan Hari Sumpah Pemuda', kat: 'Peringatan',
-      mulai: '2026-10-28T07:30:00+07:00', tempat: 'Lapangan upacara',
-      ekskul: ['multimedia', 'seni', 'paskibra'],
-      desk: 'Upacara dan pameran karya siswa bertema pemuda. Tim multimedia mengelola dokumentasi dan siaran langsung.',
-    },
-    {
-      id: 'dcd', judul: 'Digital Creators Day', kat: 'Lomba & Seni',
-      mulai: '2026-11-07T08:00:00+07:00', tempat: 'Laboratorium komputer dan aula',
-      ekskul: ['multimedia'],
-      desk: 'Lomba desain poster, video pendek, dan konten media sosial antarkelas dengan tema sekolah.',
-    },
-    {
-      id: 'guru', judul: 'Peringatan Hari Guru Nasional', kat: 'Peringatan',
-      mulai: '2026-11-25T07:30:00+07:00', tempat: 'Aula sekolah',
-      ekskul: ['seni', 'multimedia'],
-      desk: 'Penampilan dan ucapan terima kasih untuk para guru dan tenaga kependidikan.',
-    },
-    {
-      id: 'classmeeting', judul: 'Class Meeting dan Pekan Olahraga', kat: 'Olahraga',
-      mulai: '2026-12-14T07:30:00+07:00', sampai: '2026-12-17', tempat: 'Lapangan dan GOR sekolah',
-      ekskul: ['olahraga', 'pmr'],
-      desk: 'Pertandingan futsal, voli, basket, dan lomba antarkelas setelah ujian semester. PMR bersiaga di pos kesehatan.',
-    },
-    {
-      id: 'pentas', judul: 'Pentas Seni dan Bazar Wirausaha', kat: 'Lomba & Seni',
-      mulai: '2026-12-19T09:00:00+07:00', tempat: 'Halaman dan aula sekolah',
-      ekskul: ['seni', 'multimedia', 'pramuka'],
-      desk: 'Panggung karya siswa dan bazar produk hasil belajar jurusan, dikelola bersama ekstrakurikuler.',
+      id: 'gerak siaga', judul: 'sajian kegiatan Palang Merah Remaja kepada murid baru', kat: 'Sosial',
+      mulai: '2026-07-13T08:00:00+07:00', tempat: 'Aula sekolah',
+      ekskul: ['pmr', 'osis'],
+      desk: 'memperkenalkan ekstra kulikuler kepada seluruh siswa/siswi baru smknrembang ',
     },
   ],
 };
