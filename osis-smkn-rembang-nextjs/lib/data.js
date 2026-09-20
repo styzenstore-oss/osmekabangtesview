@@ -53,10 +53,8 @@ export const DATA = {
     { id: 'pramuka', nama: 'Pramuka', ikon: 'tenda', desk: 'Mendampingi pelatihan kepemimpinan dan kegiatan lapangan.' },
     { id: 'pmr', nama: 'PMR', ikon: 'plus', desk: 'Menjaga pos kesehatan dan menggerakkan kegiatan sosial.' },
     { id: 'paskibra', nama: 'Paskibra', ikon: 'bendera', desk: 'Memimpin upacara bendera dan peringatan hari besar.' },
-    { id: 'rohis', nama: 'Rohis', ikon: 'bulan', desk: 'Menyiapkan kegiatan keagamaan dan bakti sosial.' },
-    { id: 'multimedia', nama: 'Multimedia', ikon: 'kamera', desk: 'Mengelola dokumentasi, siaran, dan lomba kreator digital.' },
-    { id: 'seni', nama: 'Seni dan Musik', ikon: 'nada', desk: 'Mengisi panggung dan pertunjukan di setiap acara.' },
-    { id: 'olahraga', nama: 'Olahraga', ikon: 'bola', desk: 'Menyelenggarakan pertandingan dan pekan olahraga.' },
+    { id: 'osis', nama: 'osis', ikon: 'kamera', desk: 'Mengelola dokumentasi, siaran, dan sebagai pembawa acara.' },
+    { id: 'olahraga', nama: 'Olahraga', ikon: 'bola', desk: 'Menyelenggarakan kegiatan olahraga.' },
   ],
 
   // kat harus salah satu dari daftar KATEGORI di bawah.
@@ -75,7 +73,7 @@ export const DATA = {
       desk: 'Upacara bendera diikuti seluruh warga sekolah, dilanjutkan lomba tradisional antarkelas.',
     },
     {
-      id: 'gerak siaga', judul: 'sajian kegiatan Palang Merah Remaja kepada murid baru', kat: 'Sosial',
+      id: 'gerak-siaga', judul: 'sajian kegiatan Palang Merah Remaja kepada murid baru', kat: 'Sosial',
       mulai: '2026-07-13T08:00:00+07:00', tempat: 'Aula sekolah',
       ekskul: ['pmr', 'osis'],
       desk: 'memperkenalkan ekstra kulikuler kepada seluruh siswa/siswi baru smknrembang ',
