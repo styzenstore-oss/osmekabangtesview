@@ -16,6 +16,7 @@ export default function Footer() {
           <Link href="/kegiatan">Kegiatan</Link>
           <Link href="/kolaborasi">Kolaborasi</Link>
           <Link href="/profil">Profil</Link>
+          <Link href="/admin">Portal Admin</Link>
         </nav>
       </div>
       <div className="container">
@@ -24,3 +25,4 @@ export default function Footer() {
     </footer>
   );
 }
+
