@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { KOLABORASI } from '@/lib/events';
+import { getAllKegiatan } from '@/lib/getKegiatanData';
 import { getFotoMap, getPoster } from '@/lib/media';
 import Foundation from '@/components/Foundation';
 import HeroScreen from '@/components/HeroScreen';
@@ -8,9 +8,22 @@ import PosterSlider from '@/components/PosterSlider';
 import RecentCollabs from '@/components/RecentCollabs';
 import UpcomingEvents from '@/components/UpcomingEvents';
 
-export default function Beranda() {
+export const dynamic = 'force-dynamic';
+
+export default async function Beranda() {
   const posters = getPoster();
-  const fotoKolaborasi = getFotoMap('kolaborasi', KOLABORASI);
+  const { kegiatan, kolaborasi } = await getAllKegiatan();
+  const staticFotoMap = getFotoMap('kolaborasi', kolaborasi);
+
+  const combinedFotoKolaborasi = { ...staticFotoMap };
+  kolaborasi.forEach((item) => {
+    if (Array.isArray(item.fotos) && item.fotos.length > 0) {
+      combinedFotoKolaborasi[item.id] = [
+        ...(combinedFotoKolaborasi[item.id] || []),
+        ...item.fotos,
+      ];
+    }
+  });
 
   return (
     <>
@@ -53,8 +66,8 @@ export default function Beranda() {
       </section>
 
       <PosterSlider posters={posters} />
-      <UpcomingEvents />
-      <RecentCollabs fotoMap={fotoKolaborasi} />
+      <UpcomingEvents items={kegiatan} />
+      <RecentCollabs fotoMap={combinedFotoKolaborasi} items={kolaborasi} />
       <Foundation />
     </>
   );

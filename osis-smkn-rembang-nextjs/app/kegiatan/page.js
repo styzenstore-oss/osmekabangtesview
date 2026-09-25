@@ -10,7 +10,6 @@ export default async function Kegiatan() {
   const { kegiatan } = await getAllKegiatan();
   const staticFotoMap = getFotoMap('kegiatan', kegiatan);
 
-  // Gabungkan foto dari database Supabase (item.fotos) ke dalam fotoMap
   const combinedFotoMap = { ...staticFotoMap };
   kegiatan.forEach((item) => {
     if (Array.isArray(item.fotos) && item.fotos.length > 0) {
@@ -34,7 +33,7 @@ export default async function Kegiatan() {
       </section>
       <section className="section">
         <div className="container">
-          <KegiatanExplorer fotoMap={combinedFotoMap} />
+          <KegiatanExplorer fotoMap={combinedFotoMap} items={kegiatan} />
         </div>
       </section>
       <Foundation />

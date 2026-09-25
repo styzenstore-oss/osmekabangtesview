@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { KATEGORI, KEGIATAN, statusOf } from '@/lib/events';
+import { KATEGORI, KEGIATAN as STATIC_KEGIATAN, statusOf } from '@/lib/events';
 import { bulanTahun } from '@/lib/format';
 import ActivityCard from './ActivityCard';
 import { useNow } from './useNow';
@@ -13,28 +13,30 @@ const SEMUA_STATUS = [
   ['selesai', 'Selesai'],
 ];
 
-// fotoMap: { [idKegiatan]: [{ src, alt }] } dari getFotoMap('kegiatan', ...)
-export default function KegiatanExplorer({ fotoMap }) {
+// fotoMap: { [idKegiatan]: [{ src, alt }] }
+export default function KegiatanExplorer({ fotoMap, items }) {
   const now = useNow(60000);
   const [kat, setKat] = useState('Semua');
   const [status, setStatus] = useState('semua');
   const [q, setQ] = useState('');
 
+  const kegiatanList = items && items.length > 0 ? items : STATIC_KEGIATAN;
+
   const rows = useMemo(() => {
     const kata = q.trim().toLowerCase();
-    return KEGIATAN.filter((e) => {
+    return kegiatanList.filter((e) => {
       if (kat !== 'Semua' && e.kat !== kat) return false;
       if (status !== 'semua' && now) {
         const st = statusOf(e, now) === 'selesai' ? 'selesai' : 'akan';
         if (st !== status) return false;
       }
       if (kata) {
-        const hay = [e.judul, e.tempat, e.kat, e.desk, ...e.mitra].join(' ').toLowerCase();
+        const hay = [e.judul, e.tempat, e.kat, e.desk, ...(e.mitra || [])].join(' ').toLowerCase();
         if (!hay.includes(kata)) return false;
       }
       return true;
     });
-  }, [kat, status, q, now]);
+  }, [kat, status, q, now, kegiatanList]);
 
   const groups = [];
   rows.forEach((e) => {

@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { KEGIATAN, statusOf } from '@/lib/events';
+import { KEGIATAN as STATIC_KEGIATAN, statusOf } from '@/lib/events';
 import { bulanSingkat } from '@/lib/format';
 import Kat from './Kat';
 import { useNow } from './useNow';
@@ -24,18 +24,19 @@ function Kartu({ e }) {
   );
 }
 
-export default function UpcomingEvents() {
+export default function UpcomingEvents({ items }) {
   const now = useNow(60000);
+  const kegiatanList = items && items.length > 0 ? items : STATIC_KEGIATAN;
 
   let title = 'Kegiatan terdekat';
   let list = null;
   if (now) {
-    const upcoming = KEGIATAN.filter((e) => statusOf(e, now) !== 'selesai');
+    const upcoming = kegiatanList.filter((e) => statusOf(e, now) !== 'selesai');
     if (upcoming.length) {
       list = upcoming.slice(0, 3);
     } else {
       title = 'Kegiatan terbaru';
-      list = KEGIATAN.slice(-3).reverse();
+      list = kegiatanList.slice(-3).reverse();
     }
   }
 

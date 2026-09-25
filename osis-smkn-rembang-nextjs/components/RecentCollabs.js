@@ -1,11 +1,11 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { KOLABORASI } from '@/lib/events';
+import { KOLABORASI as STATIC_KOLABORASI } from '@/lib/events';
 import { bulanSingkat } from '@/lib/format';
 
-// Tiga kolaborasi terbaru di beranda. fotoMap berasal dari getFotoMap('kolaborasi', ...).
-export default function RecentCollabs({ fotoMap }) {
-  const list = KOLABORASI.slice(0, 3);
+export default function RecentCollabs({ fotoMap, items }) {
+  const collabList = items && items.length > 0 ? items : STATIC_KOLABORASI;
+  const list = collabList.slice(0, 3);
   if (!list.length) return null;
 
   return (
@@ -35,7 +35,7 @@ export default function RecentCollabs({ fotoMap }) {
                 </span>
                 <h3>{e.judul}</h3>
                 <span className="ev-meta">
-                  {e.mitra.length > 0 && <span>Bersama {e.mitra.join(', ')}</span>}
+                  {e.mitra && e.mitra.length > 0 && <span>Bersama {e.mitra.join(', ')}</span>}
                   <span>{e.tempat}</span>
                 </span>
               </Link>
