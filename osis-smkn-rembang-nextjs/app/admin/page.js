@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { compressImage } from '@/lib/compress';
 import { KATEGORI } from '@/lib/events';
+import { DATA } from '@/lib/data';
 
 const DAFTAR_EKSKUL = [
   'PMR',
@@ -27,7 +28,7 @@ export default function AdminDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [kegiatanList, setKegiatanList] = useState([]);
   const [userList, setUserList] = useState([]);
-  const [activeTab, setActiveTab] = useState('list'); // 'list', 'tambah', 'users'
+  const [activeTab, setActiveTab] = useState('list'); // 'list', 'tambah', 'profil_osis', 'users'
 
   // Form State Tambah Kegiatan
   const [judul, setJudul] = useState('');
@@ -41,6 +42,27 @@ export default function AdminDashboardPage() {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState({ text: '', type: '' });
+
+  // Form State Edit Profil OSIS
+  const [periode, setPeriode] = useState('2026/2027');
+  const [visi, setVisi] = useState('');
+  const [misiText, setMisiText] = useState('');
+  // Ketua
+  const [ketuaNama, setKetuaNama] = useState('');
+  const [ketuaRingkas, setKetuaRingkas] = useState('');
+  const [ketuaSalam, setKetuaSalam] = useState('');
+  const [ketuaFotoUrl, setKetuaFotoUrl] = useState('');
+  // Wakil
+  const [wakilNama, setWakilNama] = useState('');
+  const [wakilRingkas, setWakilRingkas] = useState('');
+  const [wakilSalam, setWakilSalam] = useState('');
+  const [wakilFotoUrl, setWakilFotoUrl] = useState('');
+  // Pembina
+  const [pembinaNama, setPembinaNama] = useState('');
+  const [pembinaRingkas, setPembinaRingkas] = useState('');
+  const [pembinaSalam, setPembinaSalam] = useState('');
+  const [pembinaFotoUrl, setPembinaFotoUrl] = useState('');
+  const [savingProfil, setSavingProfil] = useState(false);
 
   // Form Tambah User Baru (Khusus Superadmin)
   const [newUserEmail, setNewUserEmail] = useState('');
@@ -82,6 +104,7 @@ export default function AdminDashboardPage() {
       }
 
       await loadKegiatan();
+      await loadProfilOsis();
       setLoading(false);
     }
 
@@ -103,6 +126,53 @@ export default function AdminDashboardPage() {
     }
   };
 
+  const loadProfilOsis = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profil_osis')
+        .select('*')
+        .eq('id', 'profil_utama')
+        .single();
+
+      if (!error && data) {
+        setPeriode(data.periode || '2026/2027');
+        setVisi(data.visi || DATA.visi);
+        setMisiText(Array.isArray(data.misi) ? data.misi.join('\n') : DATA.misi.join('\n'));
+        // Ketua
+        setKetuaNama(data.ketua_nama || DATA.ketua.nama);
+        setKetuaRingkas(data.ketua_ringkas || DATA.ketua.ringkas);
+        setKetuaSalam(Array.isArray(data.ketua_salam) ? data.ketua_salam.join('\n\n') : DATA.ketua.salam.join('\n\n'));
+        setKetuaFotoUrl(data.ketua_foto || '');
+        // Wakil
+        setWakilNama(data.wakil_nama || 'Nama Wakil Ketua OSIS');
+        setWakilRingkas(data.wakil_ringkas || 'Mendampingi kepemimpinan OSIS dan sinergi antarsiswa.');
+        setWakilSalam(Array.isArray(data.wakil_salam) ? data.wakil_salam.join('\n\n') : 'Semangat berorganisasi dan berkarya bersama OSIS SMK Negeri Rembang.');
+        setWakilFotoUrl(data.wakil_foto || '');
+        // Pembina
+        setPembinaNama(data.pembina_nama || DATA.pembina.nama);
+        setPembinaRingkas(data.pembina_ringkas || DATA.pembina.ringkas);
+        setPembinaSalam(Array.isArray(data.pembina_salam) ? data.pembina_salam.join('\n\n') : DATA.pembina.salam.join('\n\n'));
+        setPembinaFotoUrl(data.pembina_foto || '');
+      } else {
+        // Isi default dari data statis
+        setPeriode(DATA.periode);
+        setVisi(DATA.visi);
+        setMisiText(DATA.misi.join('\n'));
+        setKetuaNama(DATA.ketua.nama);
+        setKetuaRingkas(DATA.ketua.ringkas);
+        setKetuaSalam(DATA.ketua.salam.join('\n\n'));
+        setWakilNama('Nama Wakil Ketua OSIS');
+        setWakilRingkas('Mendampingi kepemimpinan OSIS dan sinergi antarsiswa.');
+        setWakilSalam('Semangat berorganisasi dan berkarya bersama OSIS SMK Negeri Rembang.');
+        setPembinaNama(DATA.pembina.nama);
+        setPembinaRingkas(DATA.pembina.ringkas);
+        setPembinaSalam(DATA.pembina.salam.join('\n\n'));
+      }
+    } catch (err) {
+      console.error('Gagal mengambil profil osis:', err);
+    }
+  };
+
   const loadUsers = async () => {
     try {
       const { data, error } = await supabase
@@ -121,6 +191,94 @@ export default function AdminDashboardPage() {
   const handleLogout = async () => {
     await supabase.auth.signOut();
     router.push('/admin/login');
+  };
+
+  // Upload Foto untuk Profil (Ketua/Wakil/Pembina)
+  const handleUploadFotoProfil = async (e, setUrlCallback) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setMessage({ text: 'Mengompresi dan mengunggah foto profil...', type: 'info' });
+    try {
+      const compressed = await compressImage(file, 800, 0.85);
+      const filePath = `profil/foto_${Date.now()}.webp`;
+
+      const { data: uploadRes, error: uploadErr } = await supabase.storage
+        .from('dokumentasi')
+        .upload(filePath, compressed, { contentType: 'image/webp' });
+
+      if (uploadErr) throw uploadErr;
+
+      const { data: urlData } = supabase.storage.from('dokumentasi').getPublicUrl(filePath);
+      setUrlCallback(urlData.publicUrl);
+      setMessage({ text: 'Foto profil berhasil diunggah!', type: 'success' });
+    } catch (err) {
+      setMessage({ text: err.message || 'Gagal mengunggah foto profil.', type: 'danger' });
+    }
+  };
+
+  // Simpan Data Profil OSIS
+  const handleSaveProfil = async (e) => {
+    e.preventDefault();
+    setSavingProfil(true);
+    setMessage({ text: 'Menyimpan profil OSIS ke database...', type: 'info' });
+
+    try {
+      const misiArr = misiText
+        .split('\n')
+        .map((m) => m.trim())
+        .filter(Boolean);
+
+      const ketuaSalamArr = ketuaSalam
+        .split('\n\n')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const wakilSalamArr = wakilSalam
+        .split('\n\n')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const pembinaSalamArr = pembinaSalam
+        .split('\n\n')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const payload = {
+        id: 'profil_utama',
+        periode,
+        visi,
+        misi: misiArr,
+        ketua_nama: ketuaNama,
+        ketua_jabatan: 'Ketua OSIS',
+        ketua_foto: ketuaFotoUrl || null,
+        ketua_ringkas: ketuaRingkas,
+        ketua_salam: ketuaSalamArr,
+        wakil_nama: wakilNama,
+        wakil_jabatan: 'Wakil Ketua OSIS',
+        wakil_foto: wakilFotoUrl || null,
+        wakil_ringkas: wakilRingkas,
+        wakil_salam: wakilSalamArr,
+        pembina_nama: pembinaNama,
+        pembina_jabatan: 'Pembina OSIS',
+        pembina_foto: pembinaFotoUrl || null,
+        pembina_ringkas: pembinaRingkas,
+        pembina_salam: pembinaSalamArr,
+        updated_at: new Date().toISOString(),
+      };
+
+      const { error } = await supabase
+        .from('profil_osis')
+        .upsert([payload]);
+
+      if (error) throw error;
+
+      setMessage({ text: 'Profil OSIS (Ketua, Wakil, Pembina, Visi & Misi) berhasil diperbarui!', type: 'success' });
+    } catch (err) {
+      setMessage({ text: err.message || 'Gagal menyimpan profil OSIS.', type: 'danger' });
+    } finally {
+      setSavingProfil(false);
+    }
   };
 
   const handleFileChange = async (e) => {
@@ -180,7 +338,6 @@ export default function AdminDashboardPage() {
         }
       }
 
-      // Pastikan jika role ekskul, mitra terisi ekskulnya
       let finalMitra = mitraInput
         ? mitraInput.split(',').map((m) => m.trim()).filter(Boolean)
         : [];
@@ -189,8 +346,6 @@ export default function AdminDashboardPage() {
         finalMitra.unshift(profile.ekskul_name);
       }
 
-      // Status verifikasi: jika role ekskul, default 'pending' (butuh review pembina/superadmin)
-      // Jika Superadmin atau OSIS, langsung 'approved'
       const statusVerif = profile?.role === 'ekskul' ? 'pending' : 'approved';
 
       const { error: insertErr } = await supabase.from('kegiatan').insert([
@@ -324,6 +479,7 @@ export default function AdminDashboardPage() {
   const isSuperadmin = profile?.role === 'superadmin';
   const isOsis = profile?.role === 'osis';
   const isEkskul = profile?.role === 'ekskul';
+  const canEditProfilOsis = isSuperadmin || isOsis;
 
   return (
     <div className="admin-container">
@@ -383,6 +539,14 @@ export default function AdminDashboardPage() {
         >
           + Tambah {isEkskul ? 'Kolaborasi Ekskul' : 'Kegiatan'}
         </button>
+        {canEditProfilOsis && (
+          <button
+            className={`btn ${activeTab === 'profil_osis' ? 'btn-primary' : 'btn-ghost'} chamfer btn-sm`}
+            onClick={() => setActiveTab('profil_osis')}
+          >
+            ⚙️ Edit Profil OSIS & Visi Misi
+          </button>
+        )}
         {isSuperadmin && (
           <button
             className={`btn ${activeTab === 'users' ? 'btn-primary' : 'btn-ghost'} chamfer btn-sm`}
@@ -665,7 +829,240 @@ export default function AdminDashboardPage() {
         </div>
       )}
 
-      {/* TAB 3: KELOLA AKUN & ROLE (KHUSUS SUPERADMIN / PEMBINA) */}
+      {/* TAB 3: EDIT PROFIL OSIS, KETUA, WAKIL, PEMBINA & VISI MISI */}
+      {activeTab === 'profil_osis' && canEditProfilOsis && (
+        <div className="admin-card">
+          <div style={{ marginBottom: '20px' }}>
+            <h2 style={{ fontSize: '1.3rem', margin: '0 0 6px', color: 'var(--gold)' }}>
+              Kelola Profil OSIS, Visi, Misi, & Pengurus
+            </h2>
+            <p style={{ fontSize: '0.88rem', color: 'var(--muted)', margin: 0 }}>
+              Perubahan di sini langsung terbit dan tampil di halaman publik (Beranda & Profil).
+            </p>
+          </div>
+
+          <form onSubmit={handleSaveProfil}>
+            {/* Periode, Visi & Misi */}
+            <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '20px', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.05rem', color: 'var(--ink)', marginBottom: '14px' }}>
+                📌 Periode, Visi & Misi Organisasi
+              </h3>
+
+              <div className="admin-form-group">
+                <label>Periode Kepengurusan</label>
+                <input
+                  type="text"
+                  required
+                  className="admin-input"
+                  placeholder="2026/2027"
+                  value={periode}
+                  onChange={(e) => setPeriode(e.target.value)}
+                />
+              </div>
+
+              <div className="admin-form-group">
+                <label>Visi OSIS</label>
+                <textarea
+                  required
+                  rows={3}
+                  className="admin-textarea"
+                  placeholder="Mewujudkan OSIS SMK Negeri Rembang..."
+                  value={visi}
+                  onChange={(e) => setVisi(e.target.value)}
+                />
+              </div>
+
+              <div className="admin-form-group">
+                <label>Misi OSIS (Satu baris untuk setiap poin misi)</label>
+                <textarea
+                  required
+                  rows={6}
+                  className="admin-textarea"
+                  placeholder="Tulis setiap butir misi di baris baru..."
+                  value={misiText}
+                  onChange={(e) => setMisiText(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* KETUA OSIS */}
+            <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '20px', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.05rem', color: 'var(--cyan)', marginBottom: '14px' }}>
+                👤 Profil Ketua OSIS
+              </h3>
+
+              <div className="admin-grid-2">
+                <div className="admin-form-group">
+                  <label>Nama Ketua OSIS</label>
+                  <input
+                    type="text"
+                    required
+                    className="admin-input"
+                    value={ketuaNama}
+                    onChange={(e) => setKetuaNama(e.target.value)}
+                  />
+                </div>
+                <div className="admin-form-group">
+                  <label>Foto Ketua (Upload Baru / WebP)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleUploadFotoProfil(e, setKetuaFotoUrl)}
+                    className="admin-input"
+                    style={{ padding: '8px' }}
+                  />
+                  {ketuaFotoUrl && (
+                    <div style={{ marginTop: '6px', fontSize: '0.8rem', color: 'var(--gold)' }}>
+                      ✓ Foto aktif: <a href={ketuaFotoUrl} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>Lihat Foto</a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="admin-form-group">
+                <label>Pesan Singkat Ketua (Tampil di kartu beranda)</label>
+                <textarea
+                  rows={2}
+                  className="admin-textarea"
+                  value={ketuaRingkas}
+                  onChange={(e) => setKetuaRingkas(e.target.value)}
+                />
+              </div>
+
+              <div className="admin-form-group">
+                <label>Sambutan Lengkap Ketua (Pisahkan paragraf dengan 2x Enter)</label>
+                <textarea
+                  rows={4}
+                  className="admin-textarea"
+                  value={ketuaSalam}
+                  onChange={(e) => setKetuaSalam(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* WAKIL KETUA OSIS */}
+            <div style={{ borderBottom: '1px solid var(--border)', paddingBottom: '20px', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.05rem', color: 'var(--gold)', marginBottom: '14px' }}>
+                👥 Profil Wakil Ketua OSIS
+              </h3>
+
+              <div className="admin-grid-2">
+                <div className="admin-form-group">
+                  <label>Nama Wakil Ketua OSIS</label>
+                  <input
+                    type="text"
+                    required
+                    className="admin-input"
+                    value={wakilNama}
+                    onChange={(e) => setWakilNama(e.target.value)}
+                  />
+                </div>
+                <div className="admin-form-group">
+                  <label>Foto Wakil Ketua (Upload Baru / WebP)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleUploadFotoProfil(e, setWakilFotoUrl)}
+                    className="admin-input"
+                    style={{ padding: '8px' }}
+                  />
+                  {wakilFotoUrl && (
+                    <div style={{ marginTop: '6px', fontSize: '0.8rem', color: 'var(--gold)' }}>
+                      ✓ Foto aktif: <a href={wakilFotoUrl} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>Lihat Foto</a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="admin-form-group">
+                <label>Pesan Singkat Wakil Ketua (Tampil di kartu)</label>
+                <textarea
+                  rows={2}
+                  className="admin-textarea"
+                  value={wakilRingkas}
+                  onChange={(e) => setWakilRingkas(e.target.value)}
+                />
+              </div>
+
+              <div className="admin-form-group">
+                <label>Sambutan Lengkap Wakil (Pisahkan paragraf dengan 2x Enter)</label>
+                <textarea
+                  rows={4}
+                  className="admin-textarea"
+                  value={wakilSalam}
+                  onChange={(e) => setWakilSalam(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* PEMBINA OSIS */}
+            <div style={{ paddingBottom: '20px', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '1.05rem', color: 'var(--red)', marginBottom: '14px' }}>
+                🎓 Profil Pembina OSIS
+              </h3>
+
+              <div className="admin-grid-2">
+                <div className="admin-form-group">
+                  <label>Nama Pembina OSIS</label>
+                  <input
+                    type="text"
+                    required
+                    className="admin-input"
+                    value={pembinaNama}
+                    onChange={(e) => setPembinaNama(e.target.value)}
+                  />
+                </div>
+                <div className="admin-form-group">
+                  <label>Foto Pembina (Upload Baru / WebP)</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleUploadFotoProfil(e, setPembinaFotoUrl)}
+                    className="admin-input"
+                    style={{ padding: '8px' }}
+                  />
+                  {pembinaFotoUrl && (
+                    <div style={{ marginTop: '6px', fontSize: '0.8rem', color: 'var(--gold)' }}>
+                      ✓ Foto aktif: <a href={pembinaFotoUrl} target="_blank" rel="noreferrer" style={{ color: 'inherit' }}>Lihat Foto</a>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="admin-form-group">
+                <label>Pesan Singkat Pembina (Tampil di kartu beranda)</label>
+                <textarea
+                  rows={2}
+                  className="admin-textarea"
+                  value={pembinaRingkas}
+                  onChange={(e) => setPembinaRingkas(e.target.value)}
+                />
+              </div>
+
+              <div className="admin-form-group">
+                <label>Sambutan Lengkap Pembina (Pisahkan paragraf dengan 2x Enter)</label>
+                <textarea
+                  rows={4}
+                  className="admin-textarea"
+                  value={pembinaSalam}
+                  onChange={(e) => setPembinaSalam(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={savingProfil}
+              className="btn btn-primary chamfer"
+              style={{ width: '100%', minHeight: '50px' }}
+            >
+              {savingProfil ? 'Menyimpan Profil...' : '💾 Simpan Perubahan Profil & Visi Misi'}
+            </button>
+          </form>
+        </div>
+      )}
+
+      {/* TAB 4: KELOLA AKUN & ROLE (KHUSUS SUPERADMIN / PEMBINA) */}
       {activeTab === 'users' && isSuperadmin && (
         <div>
           <div className="admin-card">

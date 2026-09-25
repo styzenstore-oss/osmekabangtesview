@@ -96,18 +96,15 @@ CREATE TABLE IF NOT EXISTS public.kegiatan (
 -- RLS KEGIATAN
 ALTER TABLE public.kegiatan ENABLE ROW LEVEL SECURITY;
 
--- Pengunjung publik hanya melihat kegiatan yang sudah diapprove
-CREATE POLICY "Kegiatan yang sudah disetujui dapat dibaca siapa saja"
+CREATE POLICY "Kegiatan yang disetujui dapat dibaca publik"
   ON public.kegiatan FOR SELECT
   USING (status_verifikasi = 'approved' OR auth.role() = 'authenticated');
 
--- Tambah kegiatan: bisa dilakukan oleh semua user admin yang login
 CREATE POLICY "Admin yang login dapat menambah kegiatan"
   ON public.kegiatan FOR INSERT
   TO authenticated
   WITH CHECK (true);
 
--- Edit kegiatan: Superadmin bebas edit apa saja; OSIS/Ekskul edit buatannya sendiri
 CREATE POLICY "Admin dapat mengubah kegiatannya sendiri atau superadmin"
   ON public.kegiatan FOR UPDATE
   TO authenticated
@@ -116,7 +113,6 @@ CREATE POLICY "Admin dapat mengubah kegiatannya sendiri atau superadmin"
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'superadmin')
   );
 
--- Hapus kegiatan: Hanya pemilik atau superadmin
 CREATE POLICY "Admin dapat menghapus kegiatannya sendiri atau superadmin"
   ON public.kegiatan FOR DELETE
   TO authenticated
@@ -125,12 +121,115 @@ CREATE POLICY "Admin dapat menghapus kegiatannya sendiri atau superadmin"
     EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'superadmin')
   );
 
--- 4. STORAGE BUCKET (DOKUMENTASI FOTO)
+-- 4. TABEL PROFIL ORGANISASI (Ketua, Wakil, Pembina, Visi & Misi)
+CREATE TABLE IF NOT EXISTS public.profil_osis (
+  id TEXT PRIMARY KEY DEFAULT 'profil_utama',
+  periode TEXT NOT NULL DEFAULT '2026/2027',
+  visi TEXT NOT NULL,
+  misi JSONB NOT NULL DEFAULT '[]'::jsonb,
+  ketua_nama TEXT NOT NULL DEFAULT 'Nama Ketua OSIS',
+  ketua_jabatan TEXT NOT NULL DEFAULT 'Ketua OSIS',
+  ketua_foto TEXT,
+  ketua_ringkas TEXT,
+  ketua_salam JSONB DEFAULT '[]'::jsonb,
+  wakil_nama TEXT NOT NULL DEFAULT 'Nama Wakil Ketua OSIS',
+  wakil_jabatan TEXT NOT NULL DEFAULT 'Wakil Ketua OSIS',
+  wakil_foto TEXT,
+  wakil_ringkas TEXT,
+  wakil_salam JSONB DEFAULT '[]'::jsonb,
+  pembina_nama TEXT NOT NULL DEFAULT 'Nama Pembina OSIS',
+  pembina_jabatan TEXT NOT NULL DEFAULT 'Pembina OSIS',
+  pembina_foto TEXT,
+  pembina_ringkas TEXT,
+  pembina_salam JSONB DEFAULT '[]'::jsonb,
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Isi Data Default Profil OSIS (bila belum ada)
+INSERT INTO public.profil_osis (
+  id,
+  periode,
+  visi,
+  misi,
+  ketua_nama,
+  ketua_jabatan,
+  ketua_ringkas,
+  ketua_salam,
+  wakil_nama,
+  wakil_jabatan,
+  wakil_ringkas,
+  wakil_salam,
+  pembina_nama,
+  pembina_jabatan,
+  pembina_ringkas,
+  pembina_salam
+)
+VALUES (
+  'profil_utama',
+  '2026/2027',
+  'Mewujudkan OSIS SMK Negeri Rembang sebagai wadah siswa yang berkarakter, kreatif, dan berjiwa pemimpin, serta siap menghadapi dunia kerja di era digital.',
+  '[
+    "Menumbuhkan disiplin, akhlak yang baik, dan rasa cinta terhadap sekolah.",
+    "Menyelenggarakan kegiatan yang melatih kepemimpinan, kreativitas, dan kerja sama siswa.",
+    "Menjalin kolaborasi yang aktif dengan seluruh ekstrakurikuler di sekolah.",
+    "Memanfaatkan teknologi digital untuk publikasi, dokumentasi, dan layanan aspirasi siswa.",
+    "Menjadi jembatan aspirasi antara siswa, guru, dan pihak sekolah.",
+    "Menanamkan jiwa wirausaha dan kesiapan kerja sesuai ciri khas SMK."
+  ]'::jsonb,
+  'Nama Ketua OSIS',
+  'Ketua OSIS',
+  'Selamat datang di website resmi OSIS SMK Negeri Rembang. Di sini kami mencatat setiap kegiatan agar bisa diikuti dan dinilai bersama.',
+  '[
+    "Assalamu\u2019alaikum warahmatullahi wabarakatuh. Salam sejahtera bagi kita semua.",
+    "Selamat datang di website resmi OSIS SMK Negeri Rembang. Di sini kami mencatat setiap kegiatan yang kami jalankan, mulai dari peringatan hari besar, lomba, kegiatan sosial, sampai kolaborasi bersama ekstrakurikuler.",
+    "Kami ingin semua teman bisa mengikuti, memberi masukan, dan ikut terlibat. OSIS milik kita bersama, jadi mari terus bergerak dan berkarya.",
+    "Wassalamu\u2019alaikum warahmatullahi wabarakatuh."
+  ]'::jsonb,
+  'Nama Wakil Ketua OSIS',
+  'Wakil Ketua OSIS',
+  'Bersama mewujudkan sinergi dan kolaborasi antarsiswa di SMK Negeri Rembang.',
+  '[
+    "Salam hangat dari kami pengurus OSIS. Kami berkomitmen mendampingi seluruh kegiatan siswa dan ekstrakurikuler agar berjalan optimal.",
+    "Mari bergerak bersama, wujudkan SMK Negeri Rembang yang berprestasi dan berkarakter!"
+  ]'::jsonb,
+  'Nama Pembina OSIS',
+  'Pembina OSIS',
+  'OSIS adalah tempat siswa belajar memimpin dan bertanggung jawab. Kami akan terus mendampingi agar setiap program bermanfaat.',
+  '[
+    "Assalamu\u2019alaikum warahmatullahi wabarakatuh. Salam sejahtera bagi kita semua.",
+    "OSIS adalah tempat siswa belajar memimpin, merencanakan, dan bertanggung jawab atas kegiatan yang dijalankan. Kami akan terus mendampingi pengurus agar setiap program bermanfaat bagi seluruh warga sekolah.",
+    "Kepada seluruh pengurus dan anggota ekstrakurikuler, teruslah berkolaborasi dan menjaga nama baik SMK Negeri Rembang. Semoga website ini menjadi ruang belajar yang baik bagi kita semua.",
+    "Wassalamu\u2019alaikum warahmatullahi wabarakatuh."
+  ]'::jsonb
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- RLS PROFIL ORGANISASI
+ALTER TABLE public.profil_osis ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Profil organisasi dapat dibaca publik"
+  ON public.profil_osis FOR SELECT
+  USING (true);
+
+CREATE POLICY "Profil organisasi dapat diubah oleh Superadmin dan Pengurus OSIS"
+  ON public.profil_osis FOR UPDATE
+  TO authenticated
+  USING (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('superadmin', 'osis'))
+  );
+
+CREATE POLICY "Profil organisasi dapat dibuat oleh Superadmin dan Pengurus OSIS"
+  ON public.profil_osis FOR INSERT
+  TO authenticated
+  WITH CHECK (
+    EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role IN ('superadmin', 'osis'))
+  );
+
+-- 5. STORAGE BUCKET (DOKUMENTASI FOTO)
 INSERT INTO storage.buckets (id, name, public)
 VALUES ('dokumentasi', 'dokumentasi', true)
 ON CONFLICT (id) DO UPDATE SET public = true;
 
--- Kebijakan Storage Foto
 CREATE POLICY "Foto dokumentasi dapat dilihat publik"
   ON storage.objects FOR SELECT
   USING (bucket_id = 'dokumentasi');

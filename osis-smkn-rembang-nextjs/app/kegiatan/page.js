@@ -1,12 +1,25 @@
-import { KEGIATAN } from '@/lib/events';
+import { getAllKegiatan } from '@/lib/getKegiatanData';
 import { getFotoMap } from '@/lib/media';
 import Foundation from '@/components/Foundation';
 import KegiatanExplorer from '@/components/KegiatanExplorer';
 
 export const metadata = { title: 'Kegiatan' };
+export const dynamic = 'force-dynamic';
 
-export default function Kegiatan() {
-  const fotoMap = getFotoMap('kegiatan', KEGIATAN);
+export default async function Kegiatan() {
+  const { kegiatan } = await getAllKegiatan();
+  const staticFotoMap = getFotoMap('kegiatan', kegiatan);
+
+  // Gabungkan foto dari database Supabase (item.fotos) ke dalam fotoMap
+  const combinedFotoMap = { ...staticFotoMap };
+  kegiatan.forEach((item) => {
+    if (Array.isArray(item.fotos) && item.fotos.length > 0) {
+      combinedFotoMap[item.id] = [
+        ...(combinedFotoMap[item.id] || []),
+        ...item.fotos,
+      ];
+    }
+  });
 
   return (
     <>
@@ -21,7 +34,7 @@ export default function Kegiatan() {
       </section>
       <section className="section">
         <div className="container">
-          <KegiatanExplorer fotoMap={fotoMap} />
+          <KegiatanExplorer fotoMap={combinedFotoMap} />
         </div>
       </section>
       <Foundation />

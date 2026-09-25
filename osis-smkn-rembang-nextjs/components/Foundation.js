@@ -1,8 +1,9 @@
 import Link from 'next/link';
-import { DATA } from '@/lib/data';
+import { getOsisProfile } from '@/lib/getProfileData';
 import PhotoFrame from './PhotoFrame';
 
 function GreetCompact({ p }) {
+  if (!p) return null;
   return (
     <article className="greet chamfer">
       <PhotoFrame person={p} />
@@ -15,8 +16,9 @@ function GreetCompact({ p }) {
   );
 }
 
-// Bagian visi, misi, dan salam ketua/pembina. Dipasang di bawah setiap halaman.
-export default function Foundation() {
+export default async function Foundation() {
+  const profileData = await getOsisProfile();
+
   return (
     <section className="foundation section" aria-labelledby="f-title">
       <div className="container">
@@ -24,17 +26,18 @@ export default function Foundation() {
         <div className="f-grid">
           <div>
             <h3 className="sub">Visi</h3>
-            <p className="visi">{DATA.visi}</p>
+            <p className="visi">{profileData.visi}</p>
             <h3 className="sub">Misi</h3>
             <ul className="misi">
-              {DATA.misi.map((m) => (
-                <li key={m}>{m}</li>
+              {Array.isArray(profileData.misi) && profileData.misi.map((m, idx) => (
+                <li key={idx}>{m}</li>
               ))}
             </ul>
           </div>
           <div className="f-salam">
-            <GreetCompact p={DATA.ketua} />
-            <GreetCompact p={DATA.pembina} />
+            <GreetCompact p={profileData.ketua} />
+            {profileData.wakil && <GreetCompact p={profileData.wakil} />}
+            <GreetCompact p={profileData.pembina} />
             <Link className="link" href="/profil">
               Baca sambutan lengkap
             </Link>
