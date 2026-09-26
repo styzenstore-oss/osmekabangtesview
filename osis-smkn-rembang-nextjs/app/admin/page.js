@@ -429,6 +429,25 @@ export default function AdminDashboardPage() {
     setMessage({ text: 'Mendaftarkan pengguna baru...', type: 'info' });
 
     try {
+      const emailBersih = newUserEmail.trim().toLowerCase();
+
+      // Cegah dobel: jika email sudah terdaftar di profiles, jangan panggil
+      // signUp lagi (tiap panggilan signUp mengirim email via SMTP Supabase
+      // dan memicu "email rate limit exceeded" di paket gratis).
+      const { data: existing } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .ilike('email', emailBersih)
+        .maybeSingle();
+
+      if (existing) {
+        setMessage({
+          text: `Email ${emailBersih} SUDAH terdaftar. Tidak perlu didaftarkan ulang — langsung atur role-nya di tabel bawah atau minta dia login. Tiap klik "Daftarkan" mengirim email konfirmasi baru dan membuat Supabase membatasi (rate limit).`,
+          type: 'danger',
+        });
+        return;
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email: newUserEmail,
         password: newUserPass,
@@ -448,12 +467,12 @@ export default function AdminDashboardPage() {
       // sampai klik link verifikasi di Gmail.
       if (data?.user && !data?.session) {
         setMessage({
-          text: `Akun ${newUserEmail} berhasil dibuat, tapi BELUM BISA LOGIN sebelum klik link verifikasi yang dikirim ke Gmail-nya. Solusi cepat: matikan "Confirm email" di Supabase (Auth > Providers > Email), atau buat akun via Dashboard > Authentication > Users > Add user (centang Auto Confirm).`,
+          text: `Akun ${emailBersih} berhasil dibuat, tapi BELUM BISA LOGIN sebelum klik link verifikasi yang dikirim ke Gmail-nya. Solusi cepat: matikan "Confirm email" di Supabase (Auth > Providers > Email), atau buat akun via Dashboard > Authentication > Users > Add user (centang Auto Confirm).`,
           type: 'danger',
         });
       } else {
         setMessage({
-          text: `Akun ${newUserEmail} (${newUserRole.toUpperCase()}) berhasil didaftarkan dan langsung bisa login!`,
+          text: `Akun ${emailBersih} (${newUserRole.toUpperCase()}) berhasil didaftarkan dan langsung bisa login!`,
           type: 'success',
         });
       }
@@ -462,7 +481,7 @@ export default function AdminDashboardPage() {
         const { error: profErr } = await supabase.from('profiles').upsert([
           {
             id: data.user.id,
-            email: newUserEmail,
+            email: emailBersih,
             nama: newUserName,
             role: newUserRole,
             ekskul_name: newUserRole === 'ekskul' ? newUserEkskul : null,
@@ -480,7 +499,16 @@ export default function AdminDashboardPage() {
       setNewUserName('');
       await loadUsers();
     } catch (err) {
-      setMessage({ text: err.message || 'Gagal membuat user.', type: 'danger' });
+      // Pesan khusus: Supabase membatasi jumlah email yang boleh dikirim
+      // per jam di paket gratis (SMTP rate limit).
+      if (err?.message?.toLowerCase().includes('rate limit')) {
+        setMessage({
+          text: 'Batas pengiriman email Supabase tercapai (email rate limit exceeded). Tunggu ±1 jam lalu coba lagi, dan JANGAN klik "Daftarkan" berulang kali untuk email yang sama. Alternatif tercepat: buat akun via Dashboard > Authentication > Users > Add user (centang Auto Confirm) — cara itu tidak mengirim email dan tidak kena limit.',
+          type: 'danger',
+        });
+      } else {
+        setMessage({ text: err.message || 'Gagal membuat user.', type: 'danger' });
+      }
     }
   };
 
