@@ -443,8 +443,23 @@ export default function AdminDashboardPage() {
 
       if (error) throw error;
 
+      // Jika Supabase mewajibkan konfirmasi email (Confirm email ON),
+      // signUp berhasil tapi session = null dan user belum bisa login
+      // sampai klik link verifikasi di Gmail.
+      if (data?.user && !data?.session) {
+        setMessage({
+          text: `Akun ${newUserEmail} berhasil dibuat, tapi BELUM BISA LOGIN sebelum klik link verifikasi yang dikirim ke Gmail-nya. Solusi cepat: matikan "Confirm email" di Supabase (Auth > Providers > Email), atau buat akun via Dashboard > Authentication > Users > Add user (centang Auto Confirm).`,
+          type: 'danger',
+        });
+      } else {
+        setMessage({
+          text: `Akun ${newUserEmail} (${newUserRole.toUpperCase()}) berhasil didaftarkan dan langsung bisa login!`,
+          type: 'success',
+        });
+      }
+
       if (data?.user) {
-        await supabase.from('profiles').upsert([
+        const { error: profErr } = await supabase.from('profiles').upsert([
           {
             id: data.user.id,
             email: newUserEmail,
@@ -453,12 +468,13 @@ export default function AdminDashboardPage() {
             ekskul_name: newUserRole === 'ekskul' ? newUserEkskul : null,
           },
         ]);
+        // Jika gagal simpan profil karena RLS (user baru belum login),
+        // trigger handle_new_user di database tetap membuat baris profil otomatis.
+        if (profErr) {
+          console.warn('Upsert profil gagal (akan dibuat otomatis oleh trigger):', profErr.message);
+        }
       }
 
-      setMessage({
-        text: `Akun ${newUserEmail} (${newUserRole.toUpperCase()}) berhasil didaftarkan!`,
-        type: 'success',
-      });
       setNewUserEmail('');
       setNewUserPass('');
       setNewUserName('');
