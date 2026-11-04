@@ -43,7 +43,7 @@ export default async function Profil() {
       <section className="section full">
         <div className="container">
           <h2 style={{ marginBottom: 24 }}>Salam hangat dari ketua dan pembina</h2>
-          <Person p={DATA.ketua dan wakil} periode={DATA.periode} />
+          <Person p={DATA.ketua} periode={DATA.periode} />
           <Person p={DATA.pembina} periode={DATA.periode} />
         </div>
       </section>
