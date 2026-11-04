@@ -36,14 +36,14 @@ export default async function Profil() {
             </span>
           </div>
           <h1>Profil OSIS</h1>
-          <p>Kenali ketua dan pembina OSIS, serta arah yang ingin dicapai OSIS periode {DATA.periode}.</p>
+          <p>Kenali ketua, wakil dan pembina OSIS, serta arah yang ingin dicapai OSIS periode {DATA.periode}.</p>
         </div>
       </section>
 
       <section className="section full">
         <div className="container">
           <h2 style={{ marginBottom: 24 }}>Salam hangat dari ketua dan pembina</h2>
-          <Person p={DATA.ketua} periode={DATA.periode} />
+          <Person p={DATA.ketua dan wakil} periode={DATA.periode} />
           <Person p={DATA.pembina} periode={DATA.periode} />
         </div>
       </section>
